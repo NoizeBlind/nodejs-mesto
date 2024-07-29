@@ -1,15 +1,15 @@
 {
   "name": "nodejs-mesto-backend",
+  "author": "aksokolov",
   "version": "1.0.0",
   "description": "mesto yandex project",
-  "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "tsx watch src/app.ts",
+    "start": "tsx src/app.ts",
+    "dev": "tsx watch src/app.ts",
     "build": "npx tsc",
-    "lint": "npx eslint src/**/*.ts"
+    "lint": "npx eslint src/**/*.ts --fix"
   },
-  "author": "aksokolov",
   "license": "ISC",
   "devDependencies": {
     "@eslint/js": "^9.4.0",
@@ -18,14 +18,18 @@
     "@typescript-eslint/parser": "^7.12.0",
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-prettier": "^5.2.1",
     "globals": "^15.4.0",
+    "prettier": "^3.3.3",
     "ts-node": "^10.9.2",
     "tsx": "^4.15.1",
     "typescript": "^5.4.5",
     "typescript-eslint": "^7.12.0"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "mongoose": "^8.5.1"
   }
 }
