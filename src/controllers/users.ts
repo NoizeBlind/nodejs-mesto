@@ -8,6 +8,11 @@ import {
   NOT_FOUND_ERROR_CODE,
 } from "../constants";
 import { BadRequestError } from "../errors";
+import bcrypt from "bcrypt";
+import validator from "validator";
+import jwt from "jsonwebtoken";
+
+const { jwtKey = "some-secret-key" } = process.env;
 
 export const getAllUsers = (
   req: Request,
@@ -37,12 +42,43 @@ export const getSingleUser = (
 };
 
 export const createUser = (req: Request, res: Response, next: NextFunction) => {
-  User.create({ ...req.body })
+  const emailValid = validator.isEmail(req.body.email || "");
+  const passwordExists = Boolean(req.body.password);
+
+  if (!emailValid || !passwordExists) {
+    const err = new BadRequestError(
+      "Переданы некорректные данные при создании пользователя",
+    );
+    next(err);
+
+    return;
+  }
+
+  bcrypt
+    .hash(req.body.password, 10)
+    .then((hash) => User.create({ ...req.body, password: hash }))
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === MONGOOSE_VALIDATION_ERROR) {
         err.statusCode = BAD_REQUEST_ERROR_CODE;
         err.message = "Переданы некорректные данные при создании пользователя";
+      }
+
+      next(err);
+    });
+};
+
+export const getMyUser = (req: Request, res: Response, next: NextFunction) => {
+  const requestUserId = (req as any).user._id;
+
+  User.findOne({ _id: requestUserId }, { ...req.body })
+    .then((result) => {
+      res.send(result);
+    })
+    .catch((err) => {
+      if (err.name === MONGOOSE_CAST_ERROR) {
+        err.statusCode = NOT_FOUND_ERROR_CODE;
+        err.message = "Такого пользователя не существует";
       }
 
       next(err);
@@ -89,6 +125,49 @@ export const updateMyUserAvatar = (
         err.statusCode = NOT_FOUND_ERROR_CODE;
         err.message = "Такого пользователя не существует";
       }
+      next(err);
+    });
+};
+
+export const login = (req: Request, res: Response, next: NextFunction) => {
+  const { email, password } = req.body;
+  let foundedUser: any;
+
+  return User.findOne({ email })
+    .select("+password")
+    .then((user) => {
+      foundedUser = user;
+      if (!user) {
+        const err = new BadRequestError(
+          "Переданы некорректные данные при логине пользователя",
+        );
+        next(err);
+        return;
+      }
+
+      return bcrypt.compare(password, user.password);
+    })
+    .then((matched) => {
+      if (!matched) {
+        const err = new BadRequestError(
+          "Переданы некорректные данные при логине пользователя",
+        );
+        next(err);
+        return;
+      }
+
+      const token = jwt.sign({ _id: foundedUser._id }, jwtKey, {
+        expiresIn: "30d",
+      });
+
+      res.send({ token });
+    })
+    .catch((err) => {
+      if (err.name === MONGOOSE_CAST_ERROR) {
+        err.statusCode = NOT_FOUND_ERROR_CODE;
+        err.message = "Такого пользователя не существует";
+      }
+
       next(err);
     });
 };

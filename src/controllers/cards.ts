@@ -7,6 +7,7 @@ import {
   MONGOOSE_VALIDATION_ERROR,
   NOT_FOUND_ERROR_CODE,
 } from "../constants";
+import { NotFoundError } from "../errors";
 
 export const getAllCards = (
   req: Request,
@@ -40,15 +41,16 @@ export const deleteCard = (
 ) => {
   const requestUserId = (req as any).user._id;
 
-  Card.findByIdAndDelete({ _id: req.params.cardId, owner: requestUserId })
-    .then(() => {
+  Card.deleteOne({ _id: req.params.cardId, owner: requestUserId })
+    .then((result) => {
+      if (!result.deletedCount) {
+        const err = new NotFoundError("Такой карточки не существует");
+        next(err);
+        return;
+      }
       res.send("Карточка удалена");
     })
     .catch((err) => {
-      if (err.name === MONGOOSE_CAST_ERROR) {
-        err.statusCode = NOT_FOUND_ERROR_CODE;
-        err.message = "Такой карточки не существует";
-      }
       next(err);
     });
 };

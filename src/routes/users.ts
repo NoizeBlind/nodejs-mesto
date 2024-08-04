@@ -5,11 +5,22 @@ import {
   createUser,
   updateMyUser,
   updateMyUserAvatar,
+  login,
+  getMyUser,
 } from "../controllers/users";
+import { Auth } from "../middlewares/auth";
 
 const router = Router();
 
+router.post("/signin", login);
+
+router.post("/signup", createUser);
+
+router.use(Auth);
+
 router.get("/users", getAllUsers);
+
+router.get("/users/me", getMyUser);
 
 router.get("/users/:userId", getSingleUser);
 

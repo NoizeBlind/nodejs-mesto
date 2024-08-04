@@ -5,20 +5,13 @@ import UserRoutes from "./routes/users";
 import CardRoutes from "./routes/cards";
 import { INTERNAL_SERVER_ERROR_CODE } from "./constants";
 
-const { PORT = 3000 } = process.env;
-const FAKE_AUTH_USER_ID = "66a7cd616daf6b48d576b5d6";
+const { PORT = 3000, dbUrl = "mongodb://localhost:27017/mestodb" } =
+  process.env;
 
-mongoose.connect("mongodb://localhost:27017/mestodb");
+mongoose.connect(dbUrl);
 
 const app = express();
 app.use(express.json());
-app.use((req: Request, res: Response, next: NextFunction) => {
-  (req as any).user = {
-    _id: FAKE_AUTH_USER_ID,
-  };
-
-  next();
-});
 
 app.use(UserRoutes);
 app.use(CardRoutes);
