@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { urlRegExp } from "../constants";
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -26,7 +27,11 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    required: true,
+    required: [true, 'Поле "link" должно быть заполнено'],
+    validate: {
+      validator: (v: string) => urlRegExp.test(v),
+      message: 'Поле "link" должно быть валидным url-адресом.',
+    },
     default:
       "https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png",
   },

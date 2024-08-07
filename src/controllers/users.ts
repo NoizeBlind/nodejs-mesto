@@ -1,15 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express";
 import User from "../models/user";
-import {
-  BAD_REQUEST_ERROR_CODE,
-  MONGOOSE_CAST_ERROR,
-  MONGOOSE_VALIDATION_ERROR,
-  NOT_FOUND_ERROR_CODE,
-} from "../constants";
-import { BadRequestError } from "../errors";
+import { MONGOOSE_CAST_ERROR, MONGOOSE_VALIDATION_ERROR } from "../constants";
+import { BadRequestError, ConflictError, NotFoundError } from "../errors";
 import bcrypt from "bcrypt";
-import validator from "validator";
 import jwt from "jsonwebtoken";
 
 const { jwtKey = "some-secret-key" } = process.env;
@@ -33,8 +27,8 @@ export const getSingleUser = (
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
-        err.statusCode = NOT_FOUND_ERROR_CODE;
-        err.message = "Такого пользователя не существует";
+        next(new NotFoundError("Такого пользователя не существует"));
+        return;
       }
 
       next(err);
@@ -42,26 +36,28 @@ export const getSingleUser = (
 };
 
 export const createUser = (req: Request, res: Response, next: NextFunction) => {
-  const emailValid = validator.isEmail(req.body.email || "");
-  const passwordExists = Boolean(req.body.password);
-
-  if (!emailValid || !passwordExists) {
-    const err = new BadRequestError(
-      "Переданы некорректные данные при создании пользователя",
-    );
-    next(err);
-
-    return;
-  }
-
+  let passwordHash: string;
   bcrypt
     .hash(req.body.password, 10)
-    .then((hash) => User.create({ ...req.body, password: hash }))
+    .then((hash) => {
+      passwordHash = hash;
+      return User.findOne({ email: req.body.email });
+    })
+    .then((user) => {
+      if (user) {
+        throw new ConflictError("Пользователь с такой почтой уже существует");
+      }
+      return User.create({ ...req.body, password: passwordHash });
+    })
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === MONGOOSE_VALIDATION_ERROR) {
-        err.statusCode = BAD_REQUEST_ERROR_CODE;
-        err.message = "Переданы некорректные данные при создании пользователя";
+        next(
+          new BadRequestError(
+            "Переданы некорректные данные при создании пользователя",
+          ),
+        );
+        return;
       }
 
       next(err);
@@ -71,14 +67,14 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
 export const getMyUser = (req: Request, res: Response, next: NextFunction) => {
   const requestUserId = (req as any).user._id;
 
-  User.findOne({ _id: requestUserId }, { ...req.body })
+  User.findOne({ _id: requestUserId })
     .then((result) => {
       res.send(result);
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
-        err.statusCode = NOT_FOUND_ERROR_CODE;
-        err.message = "Такого пользователя не существует";
+        next(new NotFoundError("Такого пользователя не существует"));
+        return;
       }
 
       next(err);
@@ -100,8 +96,8 @@ export const updateMyUser = (
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
-        err.statusCode = NOT_FOUND_ERROR_CODE;
-        err.message = "Такого пользователя не существует";
+        next(new NotFoundError("Такого пользователя не существует"));
+        return;
       }
       next(err);
     });
@@ -122,8 +118,8 @@ export const updateMyUserAvatar = (
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
-        err.statusCode = NOT_FOUND_ERROR_CODE;
-        err.message = "Такого пользователя не существует";
+        next(new NotFoundError("Такого пользователя не существует"));
+        return;
       }
       next(err);
     });
@@ -164,8 +160,8 @@ export const login = (req: Request, res: Response, next: NextFunction) => {
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
-        err.statusCode = NOT_FOUND_ERROR_CODE;
-        err.message = "Такого пользователя не существует";
+        next(new NotFoundError("Такого пользователя не существует"));
+        return;
       }
 
       next(err);

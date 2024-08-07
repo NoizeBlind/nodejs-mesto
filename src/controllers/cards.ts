@@ -1,13 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express";
 import Card from "../models/card";
-import {
-  BAD_REQUEST_ERROR_CODE,
-  MONGOOSE_CAST_ERROR,
-  MONGOOSE_VALIDATION_ERROR,
-  NOT_FOUND_ERROR_CODE,
-} from "../constants";
-import { NotFoundError } from "../errors";
+import { MONGOOSE_CAST_ERROR, MONGOOSE_VALIDATION_ERROR } from "../constants";
+import { BadRequestError, ForbiddenError, NotFoundError } from "../errors";
 
 export const getAllCards = (
   req: Request,
@@ -26,8 +21,12 @@ export const createCard = (req: Request, res: Response, next: NextFunction) => {
     .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === MONGOOSE_VALIDATION_ERROR) {
-        err.statusCode = BAD_REQUEST_ERROR_CODE;
-        err.message = "Переданы некорректные данные при создании карточки";
+        next(
+          new BadRequestError(
+            "Переданы некорректные данные при создании карточки",
+          ),
+        );
+        return;
       }
 
       next(err);
@@ -43,14 +42,22 @@ export const deleteCard = (
 
   Card.deleteOne({ _id: req.params.cardId, owner: requestUserId })
     .then((result) => {
+      console.log(result);
       if (!result.deletedCount) {
-        const err = new NotFoundError("Такой карточки не существует");
+        const err = new ForbiddenError(
+          "Недостаточно прав для удаления карточки",
+        );
         next(err);
         return;
       }
       res.send("Карточка удалена");
     })
     .catch((err) => {
+      if (err.name === MONGOOSE_CAST_ERROR) {
+        next(new NotFoundError("Такой карточки не существует"));
+        return;
+      }
+
       next(err);
     });
 };
@@ -66,8 +73,8 @@ export const likeCard = (req: Request, res: Response, next: NextFunction) =>
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
-        err.statusCode = NOT_FOUND_ERROR_CODE;
-        err.message = "Такой карточки не существует";
+        next(new NotFoundError("Такой карточки не существует"));
+        return;
       }
       next(err);
     });
@@ -83,8 +90,8 @@ export const dislikeCard = (req: Request, res: Response, next: NextFunction) =>
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
-        err.statusCode = NOT_FOUND_ERROR_CODE;
-        err.message = "Такой карточки не существует";
+        next(new NotFoundError("Такой карточки не существует"));
+        return;
       }
       next(err);
     });
