@@ -49,7 +49,7 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
       }
       return User.create({ ...req.body, password: passwordHash });
     })
-    .then((user) => res.send(user))
+    .then((user) => res.status(201).send(user))
     .catch((err) => {
       if (err.name === MONGOOSE_VALIDATION_ERROR) {
         next(
@@ -92,7 +92,7 @@ export const updateMyUser = (
     .then((result) => {
       if (!result.acknowledged) {
         throw new BadRequestError("Неверные поля для обновления");
-      } else res.send("Пользователь обновлен");
+      } else res.send({ message: "Пользователь обновлен" });
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
@@ -114,7 +114,7 @@ export const updateMyUserAvatar = (
     .then((result) => {
       if (!result.acknowledged) {
         throw new BadRequestError("Неверные поля для обновления");
-      } else res.send("Пользователь обновлен");
+      } else res.send({ message: "Пользователь обновлен" });
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {

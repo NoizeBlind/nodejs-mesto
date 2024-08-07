@@ -18,7 +18,7 @@ export const createCard = (req: Request, res: Response, next: NextFunction) => {
   const requestUserId = (req as any).user._id;
 
   Card.create({ ...req.body, owner: requestUserId })
-    .then((card) => res.send(card))
+    .then((card) => res.status(201).send(card))
     .catch((err) => {
       if (err.name === MONGOOSE_VALIDATION_ERROR) {
         next(
@@ -50,7 +50,7 @@ export const deleteCard = (
         next(err);
         return;
       }
-      res.send("Карточка удалена");
+      res.send({ message: "Карточка удалена" });
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
@@ -69,7 +69,7 @@ export const likeCard = (req: Request, res: Response, next: NextFunction) =>
     { new: true },
   )
     .then(() => {
-      res.send("Лайк поставлен");
+      res.send({ message: "Лайк поставлен" });
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
@@ -86,7 +86,7 @@ export const dislikeCard = (req: Request, res: Response, next: NextFunction) =>
     { new: true },
   )
     .then(() => {
-      res.send("Лайк удален");
+      res.send({ message: "Лайк удален" });
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {

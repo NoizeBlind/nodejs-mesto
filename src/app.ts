@@ -19,6 +19,10 @@ app.use(requestLogger);
 app.use(UserRoutes);
 app.use(CardRoutes);
 
+app.get("*", function (req, res) {
+  res.status(404).send({ message: "404 not found" });
+});
+
 app.use(errorLogger);
 app.use(errors()); // обработчик ошибок celebrate
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
