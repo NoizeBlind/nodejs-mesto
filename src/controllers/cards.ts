@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express";
 import Card from "../models/card";
 import { MONGOOSE_CAST_ERROR, MONGOOSE_VALIDATION_ERROR } from "../constants";
@@ -15,7 +14,7 @@ export const getAllCards = (
 };
 
 export const createCard = (req: Request, res: Response, next: NextFunction) => {
-  const requestUserId = (req as any).user._id;
+  const requestUserId = req.user._id;
 
   Card.create({ ...req.body, owner: requestUserId })
     .then((card) => res.status(201).send(card))
@@ -38,11 +37,10 @@ export const deleteCard = (
   res: Response,
   next: NextFunction,
 ) => {
-  const requestUserId = (req as any).user._id;
+  const requestUserId = req.user._id;
 
   Card.deleteOne({ _id: req.params.cardId, owner: requestUserId })
     .then((result) => {
-      console.log(result);
       if (!result.deletedCount) {
         const err = new ForbiddenError(
           "Недостаточно прав для удаления карточки",
@@ -65,7 +63,7 @@ export const deleteCard = (
 export const likeCard = (req: Request, res: Response, next: NextFunction) =>
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $addToSet: { likes: (req as any).user._id } },
+    { $addToSet: { likes: req.user._id } },
     { new: true },
   )
     .then(() => {
@@ -82,7 +80,7 @@ export const likeCard = (req: Request, res: Response, next: NextFunction) =>
 export const dislikeCard = (req: Request, res: Response, next: NextFunction) =>
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $pull: { likes: (req as any).user._id } },
+    { $pull: { likes: req.user._id } },
     { new: true },
   )
     .then(() => {

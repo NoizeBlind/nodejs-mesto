@@ -9,7 +9,7 @@ import {
   getMyUser,
 } from "../controllers/users";
 import { Auth } from "../middlewares/auth";
-import { celebrate, Joi } from "celebrate";
+import { celebrate, Joi, Segments } from "celebrate";
 import { urlRegExp } from "../constants";
 
 const router = Router();
@@ -41,7 +41,15 @@ router.get("/users", getAllUsers);
 
 router.get("/users/me", getMyUser);
 
-router.get("/users/:userId", getSingleUser);
+router.get(
+  "/users/:userId",
+  getSingleUser,
+  celebrate({
+    [Segments.PARAMS]: {
+      userId: Joi.string().required(),
+    },
+  }),
+);
 
 router.post("/users", celebrate(fullUserValidationSchema), createUser);
 
@@ -51,7 +59,7 @@ router.patch(
   "/users/me/avatar",
   celebrate({
     body: Joi.object().keys({
-      avatar: Joi.string().regex(urlRegExp),
+      avatar: Joi.string().regex(urlRegExp).required(),
     }),
   }),
   updateMyUserAvatar,

@@ -4,7 +4,15 @@ import {
   BAD_REQUEST_ERROR_CODE,
   CONFLICT_ERROR_CODE,
   FORBIDDEN_ERROR_CODE,
+  UNATHORIZED_ERROR_CODE,
 } from "./constants";
+
+export class UnautharizedError extends Error {
+  constructor(message: string) {
+    super(message);
+    (this as any).statusCode = UNATHORIZED_ERROR_CODE;
+  }
+}
 
 export class BadRequestError extends Error {
   constructor(message: string) {
@@ -12,6 +20,7 @@ export class BadRequestError extends Error {
     (this as any).statusCode = BAD_REQUEST_ERROR_CODE;
   }
 }
+
 export class ForbiddenError extends Error {
   constructor(message: string) {
     super(message);

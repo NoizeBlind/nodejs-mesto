@@ -7,6 +7,12 @@ import { INTERNAL_SERVER_ERROR_CODE } from "./constants";
 import { requestLogger, errorLogger } from "./middlewares/logger";
 import { errors } from "celebrate";
 
+declare module "express-serve-static-core" {
+  interface Request {
+    user: { _id: string };
+  }
+}
+
 const { PORT = 3000, dbUrl = "mongodb://localhost:27017/mestodb" } =
   process.env;
 

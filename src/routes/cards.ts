@@ -6,7 +6,7 @@ import {
   likeCard,
   dislikeCard,
 } from "../controllers/cards";
-import { celebrate, Joi } from "celebrate";
+import { celebrate, Joi, Segments } from "celebrate";
 
 const router = Router();
 
@@ -23,10 +23,34 @@ router.post(
   createCard,
 );
 
-router.delete("/cards/:cardId", deleteCard);
+router.delete(
+  "/cards/:cardId",
+  deleteCard,
+  celebrate({
+    [Segments.PARAMS]: {
+      cardId: Joi.string().required(),
+    },
+  }),
+);
 
-router.put("/cards/:cardId/likes", likeCard);
+router.put(
+  "/cards/:cardId/likes",
+  likeCard,
+  celebrate({
+    [Segments.PARAMS]: {
+      cardId: Joi.string().required(),
+    },
+  }),
+);
 
-router.delete("/cards/:cardId/likes", dislikeCard);
+router.delete(
+  "/cards/:cardId/likes",
+  dislikeCard,
+  celebrate({
+    [Segments.PARAMS]: {
+      cardId: Joi.string().required(),
+    },
+  }),
+);
 
 export default router;

@@ -1,12 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express";
-import User from "../models/user";
-import { MONGOOSE_CAST_ERROR, MONGOOSE_VALIDATION_ERROR } from "../constants";
-import { BadRequestError, ConflictError, NotFoundError } from "../errors";
+import User, { IUser } from "../models/user";
+import {
+  MONGOOSE_CAST_ERROR,
+  MONGOOSE_SERVER_ERROR,
+  MONGOOSE_VALIDATION_ERROR,
+} from "../constants";
+import { BadRequestError, NotFoundError } from "../errors";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-const { jwtKey = "some-secret-key" } = process.env;
+const { JWT_SECRET = "some-secret-key" } = process.env;
 
 export const getAllUsers = (
   req: Request,
@@ -36,20 +39,19 @@ export const getSingleUser = (
 };
 
 export const createUser = (req: Request, res: Response, next: NextFunction) => {
-  let passwordHash: string;
   bcrypt
     .hash(req.body.password, 10)
     .then((hash) => {
-      passwordHash = hash;
-      return User.findOne({ email: req.body.email });
+      return User.create({ ...req.body, password: hash });
     })
-    .then((user) => {
-      if (user) {
-        throw new ConflictError("Пользователь с такой почтой уже существует");
-      }
-      return User.create({ ...req.body, password: passwordHash });
+    .then(({ name, email, about, avatar }) => {
+      res.status(201).send({
+        name,
+        email,
+        about,
+        avatar,
+      });
     })
-    .then((user) => res.status(201).send(user))
     .catch((err) => {
       if (err.name === MONGOOSE_VALIDATION_ERROR) {
         next(
@@ -59,13 +61,17 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
         );
         return;
       }
+      if (err.name === MONGOOSE_SERVER_ERROR) {
+        next(new BadRequestError("Email уже существует"));
+        return;
+      }
 
       next(err);
     });
 };
 
 export const getMyUser = (req: Request, res: Response, next: NextFunction) => {
-  const requestUserId = (req as any).user._id;
+  const requestUserId = req.user._id;
 
   User.findOne({ _id: requestUserId })
     .then((result) => {
@@ -86,13 +92,13 @@ export const updateMyUser = (
   res: Response,
   next: NextFunction,
 ) => {
-  const requestUserId = (req as any).user._id;
+  const requestUserId = req.user._id;
 
-  User.updateOne({ _id: requestUserId }, { ...req.body })
+  User.findOneAndUpdate({ _id: requestUserId }, { ...req.body }, { new: true })
     .then((result) => {
-      if (!result.acknowledged) {
+      if (!result) {
         throw new BadRequestError("Неверные поля для обновления");
-      } else res.send({ message: "Пользователь обновлен" });
+      } else res.send(result);
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
@@ -108,13 +114,17 @@ export const updateMyUserAvatar = (
   res: Response,
   next: NextFunction,
 ) => {
-  const requestUserId = (req as any).user._id;
+  const requestUserId = req.user._id;
 
-  User.updateOne({ _id: requestUserId }, { avatar: req.body.avatar })
+  User.findOneAndUpdate(
+    { _id: requestUserId },
+    { avatar: req.body.avatar },
+    { new: true },
+  )
     .then((result) => {
-      if (!result.acknowledged) {
+      if (!result) {
         throw new BadRequestError("Неверные поля для обновления");
-      } else res.send({ message: "Пользователь обновлен" });
+      } else res.send(result);
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
@@ -127,7 +137,7 @@ export const updateMyUserAvatar = (
 
 export const login = (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
-  let foundedUser: any;
+  let foundedUser: IUser | null;
 
   return User.findOne({ email })
     .select("+password")
@@ -152,8 +162,8 @@ export const login = (req: Request, res: Response, next: NextFunction) => {
         return;
       }
 
-      const token = jwt.sign({ _id: foundedUser._id }, jwtKey, {
-        expiresIn: "30d",
+      const token = jwt.sign({ _id: foundedUser?._id }, JWT_SECRET, {
+        expiresIn: "7d",
       });
 
       res.send({ token });
