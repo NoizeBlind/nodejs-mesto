@@ -30,7 +30,7 @@ app.get("*", function (req, res) {
 });
 
 app.use(errorLogger);
-app.use(errors()); // обработчик ошибок celebrate
+app.use(errors());
 app.use(
   (
     err: UnautharizedError,
