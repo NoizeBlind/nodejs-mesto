@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import express, { Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
 import UserRoutes from "./routes/users";
@@ -6,6 +5,7 @@ import CardRoutes from "./routes/cards";
 import { INTERNAL_SERVER_ERROR_CODE } from "./constants";
 import { requestLogger, errorLogger } from "./middlewares/logger";
 import { errors } from "celebrate";
+import { UnautharizedError } from "./errors";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -31,16 +31,23 @@ app.get("*", function (req, res) {
 
 app.use(errorLogger);
 app.use(errors()); // обработчик ошибок celebrate
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
-  const { statusCode = INTERNAL_SERVER_ERROR_CODE, message } = err;
-  res.status(statusCode).send({
-    message:
-      statusCode === INTERNAL_SERVER_ERROR_CODE
-        ? "На сервере произошла ошибка"
-        : message,
-  });
-});
+app.use(
+  (
+    err: UnautharizedError,
+    req: Request,
+    res: Response,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _next: NextFunction,
+  ) => {
+    const { statusCode = INTERNAL_SERVER_ERROR_CODE, message } = err;
+    res.status(statusCode).send({
+      message:
+        statusCode === INTERNAL_SERVER_ERROR_CODE
+          ? "На сервере произошла ошибка"
+          : message,
+    });
+  },
+);
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);

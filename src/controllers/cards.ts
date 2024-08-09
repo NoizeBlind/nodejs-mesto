@@ -66,8 +66,8 @@ export const likeCard = (req: Request, res: Response, next: NextFunction) =>
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .then(() => {
-      res.send({ message: "Лайк поставлен" });
+    .then((card) => {
+      res.send(card);
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {
@@ -83,8 +83,8 @@ export const dislikeCard = (req: Request, res: Response, next: NextFunction) =>
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .then(() => {
-      res.send({ message: "Лайк удален" });
+    .then((card) => {
+      res.send(card);
     })
     .catch((err) => {
       if (err.name === MONGOOSE_CAST_ERROR) {

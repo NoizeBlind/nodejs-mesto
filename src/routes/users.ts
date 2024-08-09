@@ -23,7 +23,7 @@ const loginValidationSchema = {
 
 const fullUserValidationSchema = {
   body: Joi.object().keys({
-    email: Joi.string(),
+    email: Joi.string().required().email(),
     password: Joi.string(),
     name: Joi.string().min(2).max(20),
     about: Joi.string().min(2).max(200),

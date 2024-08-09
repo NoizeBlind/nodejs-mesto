@@ -7,6 +7,7 @@ import {
   dislikeCard,
 } from "../controllers/cards";
 import { celebrate, Joi, Segments } from "celebrate";
+import { urlRegExp } from "../constants";
 
 const router = Router();
 
@@ -17,7 +18,7 @@ router.post(
   celebrate({
     body: Joi.object().keys({
       name: Joi.string().required().min(2).max(30),
-      link: Joi.string().required(),
+      link: Joi.string().regex(urlRegExp),
     }),
   }),
   createCard,

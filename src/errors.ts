@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   NOT_FOUND_ERROR_CODE,
   BAD_REQUEST_ERROR_CODE,
@@ -8,35 +7,46 @@ import {
 } from "./constants";
 
 export class UnautharizedError extends Error {
+  public statusCode: number;
+
   constructor(message: string) {
     super(message);
-    (this as any).statusCode = UNATHORIZED_ERROR_CODE;
+    this.statusCode = UNATHORIZED_ERROR_CODE;
+    Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
   }
 }
 
 export class BadRequestError extends Error {
+  public statusCode: number;
+
   constructor(message: string) {
     super(message);
-    (this as any).statusCode = BAD_REQUEST_ERROR_CODE;
+    this.statusCode = BAD_REQUEST_ERROR_CODE;
   }
 }
 
 export class ForbiddenError extends Error {
+  public statusCode: number;
+
   constructor(message: string) {
     super(message);
-    (this as any).statusCode = FORBIDDEN_ERROR_CODE;
+    this.statusCode = FORBIDDEN_ERROR_CODE;
   }
 }
 export class NotFoundError extends Error {
+  public statusCode: number;
+
   constructor(message: string) {
     super(message);
-    (this as any).statusCode = NOT_FOUND_ERROR_CODE;
+    this.statusCode = NOT_FOUND_ERROR_CODE;
   }
 }
 
 export class ConflictError extends Error {
+  public statusCode: number;
+
   constructor(message: string) {
     super(message);
-    (this as any).statusCode = CONFLICT_ERROR_CODE;
+    this.statusCode = CONFLICT_ERROR_CODE;
   }
 }

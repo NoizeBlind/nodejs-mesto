@@ -21,7 +21,7 @@ export const Auth = (req: Request, res: Response, next: NextFunction) => {
     next(new UnautharizedError("Необходима авторизация"));
   }
 
-  req.user = (payload as JwtPayload)._id;
+  req.user = { _id: (payload as JwtPayload)._id };
 
   next();
 };
