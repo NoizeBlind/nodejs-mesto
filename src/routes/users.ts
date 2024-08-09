@@ -24,6 +24,16 @@ const loginValidationSchema = {
 const fullUserValidationSchema = {
   body: Joi.object().keys({
     email: Joi.string().required().email(),
+    password: Joi.string().required(),
+    name: Joi.string().min(2).max(20),
+    about: Joi.string().min(2).max(200),
+    avatar: Joi.string().regex(urlRegExp),
+  }),
+};
+
+const editUserValidationSchema = {
+  body: Joi.object().keys({
+    email: Joi.string().email(),
     password: Joi.string(),
     name: Joi.string().min(2).max(20),
     about: Joi.string().min(2).max(200),
@@ -53,7 +63,7 @@ router.get(
 
 router.post("/users", celebrate(fullUserValidationSchema), createUser);
 
-router.patch("/users/me", celebrate(fullUserValidationSchema), updateMyUser);
+router.patch("/users/me", celebrate(editUserValidationSchema), updateMyUser);
 
 router.patch(
   "/users/me/avatar",
