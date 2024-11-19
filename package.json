@@ -3,7 +3,6 @@
   "author": "aksokolov",
   "version": "1.0.0",
   "description": "mesto yandex project",
-  "type": "module",
   "scripts": {
     "start": "tsx src/app.ts",
     "dev": "tsx watch src/app.ts",
